@@ -46,7 +46,7 @@ llm_checker = ChatOpenAI(
     model="deepseek-chat",
     openai_api_key=DEEPSEEK_API_KEY,
     openai_api_base=DEEPSEEK_BASE_URL,
-    temperature=0.0, # 绝对理智，只看事实
+    temperature=0.1, # 绝对理智，只看事实
     max_tokens=2000
 )
 tutor_prompt = ChatPromptTemplate.from_template("""
@@ -91,20 +91,19 @@ checker_prompt = ChatPromptTemplate.from_template("""
 # ==========================================
 
 def run_collaboration(question):
-    print(f"\n🎯 新任务: {question}")
+    print(f"\n 新任务: {question}")
 
-    # --- 第1步: 检索 (Retrieval) ---
-    print("🔍 1. 正在检索知识库...")
+    print(" 1. 正在检索知识库...")
     docs = retriever.invoke(question)
     # 把检索到的文档合并成一个字符串
     context_text = "\n\n".join([d.page_content for d in docs])
 
     if not context_text:
-        print("⚠️ 未找到相关教材内容。")
+        print("未找到相关教材内容。")
         return
 
     # --- 第2步: 回答者生成答案 (Tutor Agent) ---
-    print("👨‍🏫 2. 回答者(Tutor)正在思考...")
+    print("2. 回答者(Tutor)正在思考...")
     # 填充提示词
     tutor_messages = tutor_prompt.format_messages(
         context=context_text,
@@ -115,7 +114,7 @@ def run_collaboration(question):
     print(f"\n[Tutor 初稿]:\n{tutor_response}\n")
 
     # --- 第3步: 检查者审核 (Checker Agent) ---
-    print("🧐 3. 检查者(Checker)正在审核...")
+    print(" 3. 检查者(Checker)正在审核...")
     checker_messages = checker_prompt.format_messages(
         context=context_text,
         question=question,
@@ -127,17 +126,14 @@ def run_collaboration(question):
 
     # --- (进阶) 第4步: 简单的判断逻辑 ---
     if "【通过】" in checker_response:
-        print("✅ 最终结果: 答案已发布给学生。")
+        print(" 最终结果: 答案已发布给学生。")
     else:
-        print("❌ 最终结果: 答案被驳回，需要人工或自动修正。")
+        print(" 最终结果: 答案被驳回，需要人工或自动修正。")
 
 
-# ==========================================
-# 7. 运行测试
-# ==========================================
+
 # 测试一个教材里有的问题
 run_collaboration("Agent的核心架构是什么？")
 
 # 测试一个可能让它胡说八道的问题（你可以故意问一个教材里没有的）
-print("-" * 50)
 run_collaboration("怎么煮红烧肉？")
