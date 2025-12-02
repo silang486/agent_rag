@@ -12,7 +12,7 @@ with open("api.txt", "r", encoding="utf-8") as f:
 DEEPSEEK_API_KEY = API_KEY
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 print("处理数据，存入向量数据库...")
-loader = TextLoader("ai_tutorial.txt", encoding="utf-8")
+loader = TextLoader("bnuz_helper.txt", encoding="utf-8")
 documents = loader.load()
 # 切分文本 (如果是大书，chunk_size 设置为 500-1000 左右)
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
@@ -54,5 +54,6 @@ def ask_question(question):
     print(" 参考的素材片段:")
     for doc in response['source_documents']:
         print(f"[内容]: {doc.page_content}...")
-question="agent有哪几个核心架构？"
-ask_question(question)
+question1="北师珠的人工智能专业如何？"
+question2="刘凯老师讲课如何？考试严格吗？"
+ask_question(question2)
