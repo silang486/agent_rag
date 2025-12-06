@@ -9,7 +9,7 @@ from langchain_community.vectorstores import Chroma, FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_classic.chains import RetrievalQA
-with open("api.txt", "r", encoding="utf-8") as f:
+with open("bnuzHelper/api.txt", "r", encoding="utf-8") as f:
     API_KEY=f.read()
 
 DEEPSEEK_API_KEY = API_KEY

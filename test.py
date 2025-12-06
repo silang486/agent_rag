@@ -5,7 +5,7 @@ from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-with open("api.txt", "r", encoding="utf-8") as f:
+with open("bnuzHelper/api.txt", "r", encoding="utf-8") as f:
     API_KEY=f.read()
 print(API_KEY)
 # ==========================================
