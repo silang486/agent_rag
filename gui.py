@@ -1,6 +1,7 @@
 import streamlit as st
 from bnuzHelper import get_qa_chain  # 从你的 rag2 导入那个函数
-
+#streamlit run gui.py
+#终端输入上面代码运行
 st.title("🎓 BNUZ 新生百事通")
 
 

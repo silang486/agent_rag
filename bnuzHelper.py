@@ -12,16 +12,25 @@ from langchain_classic.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 # === 配置区域 ===
 # 建议：API_KEY 最好也放在函数里读，或者用环境变量，不过这里为了简单先放这
+import streamlit as st
+
 try:
-    with open("api.txt", "r", encoding="utf-8") as f:
-        API_KEY = f.read().strip()
-except FileNotFoundError:
-    API_KEY = "你的KEY"  # 防止报错
+    # 尝试从 Streamlit 的特有配置里读
+    API_KEY = st.secrets["DEEPSEEK_API_KEY"]
+except:
+    # 如果报错（说明在本地），就读文件
+    try:
+        with open("api.txt", "r", encoding="utf-8") as f:
+            API_KEY = f.read().strip()
+    except:
+        API_KEY = "" # 避免直接报错
+
+DEEPSEEK_API_KEY = API_KEY
 
 DEEPSEEK_API_KEY = API_KEY
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DB_PATH = "faiss_index_store"
-FORCE_REBUILD = False
+FORCE_REBUILD = True
 
 
 # === 核心函数：构建并返回 QA 链 ===
