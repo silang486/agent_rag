@@ -1,6 +1,4 @@
 import os
-
-# 设置环境变量 (放在最上面没问题，配置项通常可以全局)
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
 from langchain_community.document_loaders import TextLoader
@@ -10,7 +8,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_classic.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
-# === 配置区域 ===
+
 # 建议：API_KEY 最好也放在函数里读，或者用环境变量，不过这里为了简单先放这
 import streamlit as st
 
@@ -33,9 +31,8 @@ DB_PATH = "faiss_index_store"
 FORCE_REBUILD = True
 
 
-# === 核心函数：构建并返回 QA 链 ===
 def get_qa_chain():
-    # 1. 加载 Embedding 模型 (把打印和加载移到函数内)
+    # 加载 Embedding 模型
     print("⬇ [bnuzHelper] 正在加载 Embedding 模型...")
     embedding_model = HuggingFaceEmbeddings(
         model_name="BAAI/bge-small-zh-v1.5",
@@ -55,7 +52,6 @@ def get_qa_chain():
     else:
         print("🔄 [bnuzHelper] 未发现数据库或强制重构，正在处理数据...")
         # --- 数据处理 ---
-        # 建议使用 Markdown 分割 (兼容你之前的需求)
         try:
             with open("bnuz_helper.txt", "r", encoding="utf-8") as f:
                 file_content = f.read()
@@ -69,15 +65,15 @@ def get_qa_chain():
 
             db = FAISS.from_documents(texts, embedding_model)
             db.save_local(DB_PATH)
-            print("✅ [bnuzHelper] 数据库构建完毕！")
+            print(" [bnuzHelper] 数据库构建完毕！")
         except Exception as e:
-            print(f"❌ 数据处理出错: {e}")
+            print(f" 数据处理出错: {e}")
             return None
 
-    # 3. 创建检索器
+
     retriever = db.as_retriever(search_kwargs={"k": 3})
 
-    # 4. 初始化 LLM
+    # 初始化 LLM
     llm = ChatOpenAI(
         model="deepseek-chat",
         openai_api_key=DEEPSEEK_API_KEY,
@@ -86,7 +82,7 @@ def get_qa_chain():
         max_tokens=1024
     )
 
-    # 5. 定义 Prompt (解决上下文丢失问题)
+    # 5. 定义 Prompt
     template = """你是一个北师珠（BNUZ）的新生助手。请根据下方的【参考资料】回答用户问题。
 
     注意：
@@ -100,7 +96,7 @@ def get_qa_chain():
     """
     QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 
-    # 6. 构建链
+
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
@@ -111,9 +107,6 @@ def get_qa_chain():
 
     return qa_chain
 
-
-# === 测试代码 ===
-# 加上这就只有直接运行这个文件时才跑，被 import 时不跑
 if __name__ == "__main__":
     print("正在进行单元测试...")
     chain = get_qa_chain()
