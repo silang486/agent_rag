@@ -11,22 +11,60 @@ with open("api.txt", "r", encoding="utf-8") as f:
 
 DEEPSEEK_API_KEY = API_KEY
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-print("处理数据，存入向量数据库...")
-loader = TextLoader("bnuz_helper.txt", encoding="utf-8")
-documents = loader.load()
-# 切分文本 (如果是大书，chunk_size 设置为 500-1000 左右)
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
-texts = text_splitter.split_documents(documents)
+DB_PATH = "faiss_index_store"
+# 是否强制重新构建数据库？
+# 如果你修改了 ai_tutorial.txt，请把这里改为 True 运行一次，然后改回 False
+FORCE_REBUILD = False
 
+
+print("⬇ 正在加载 Embedding 模型...")
 embedding_model = HuggingFaceEmbeddings(
     model_name="BAAI/bge-small-zh-v1.5",
     model_kwargs={'device': 'cpu'},
-    encode_kwargs={'normalize_embeddings': True} # BGE模型建议开启归一化
+    encode_kwargs={'normalize_embeddings': True}
 )
 
-db = FAISS.from_documents(texts, embedding_model)
+
+# 判断本地是否已经有数据库文件
+if os.path.exists(DB_PATH) and not FORCE_REBUILD:
+    print(f" 发现本地向量数据库: {DB_PATH}")
+    print("⚡ 正在直接加载，跳过数据处理...")
+
+    # 【关键】allow_dangerous_deserialization=True 是必须的
+    # 因为 pickle 文件理论上不安全，但这是我们自己生成的，所以可以信任
+    db = FAISS.load_local(
+        DB_PATH,
+        embedding_model,
+        allow_dangerous_deserialization=True
+    )
+    print("✅ 本地数据库加载成功！")
+
+else:
+    print(" 未发现本地数据库 或 要求强制重构，开始处理数据...")
+
+    # --- 原有的数据处理流程 ---
+    try:
+        loader = TextLoader("bnuz_helper.txt", encoding="utf-8")
+        documents = loader.load()
+    except Exception as e:
+        print(f"⚠️ 读取文件失败: {e}，使用测试数据")
+        from langchain_core.documents import Document
+
+        documents = [Document(page_content="Agent的核心架构...")]  # (此处省略长文本)
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
+    texts = text_splitter.split_documents(documents)
+
+    print(f"⚡ 正在计算向量并构建索引 (共 {len(texts)} 个片段)...")
+    db = FAISS.from_documents(texts, embedding_model)
+
+    # --- 保存到本地 ---
+    print(f"💾 正在保存数据库到: {DB_PATH} ...")
+    db.save_local(DB_PATH)
+    print("✅ 数据库构建并保存完毕！")
+
+# 创建检索器
 retriever = db.as_retriever(search_kwargs={"k": 2})
-print("向量数据库构建完成")
 
 # 初始化 DeepSeek 模型
 
@@ -56,4 +94,5 @@ def ask_question(question):
         print(f"[内容]: {doc.page_content}...")
 question1="北师珠的人工智能专业如何？"
 question2="刘凯老师讲课如何？考试严格吗？"
-ask_question(question2)
+question=input()
+ask_question(question)
