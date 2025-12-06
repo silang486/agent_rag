@@ -17,4 +17,4 @@ faiss_index/
 # 忽略虚拟环境
 venv/
 env/
-
+faiss_index_store
