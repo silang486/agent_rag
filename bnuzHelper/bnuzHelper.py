@@ -13,26 +13,29 @@ from langchain_core.prompts import PromptTemplate
 # 建议：API_KEY 最好也放在函数里读，或者用环境变量，不过这里为了简单先放这
 import streamlit as st
 
-try:
-    # 尝试从 Streamlit 的特有配置里读
-    API_KEY = st.secrets["DEEPSEEK_API_KEY"]
-except:
-    # 如果报错（说明在本地），就读文件
+def get_api_key():
+    # 优先读 Secrets (云端)
+    if "DEEPSEEK_API_KEY" in st.secrets:
+        return st.secrets["DEEPSEEK_API_KEY"]
+    # 其次读本地文件
     try:
         with open("api.txt", "r", encoding="utf-8") as f:
-            API_KEY = f.read().strip()
+            return f.read().strip()
     except:
-        API_KEY = "" # 避免直接报错
+        return None
 
-DEEPSEEK_API_KEY = API_KEY
-
-DEEPSEEK_API_KEY = API_KEY
+DEEPSEEK_API_KEY = get_api_key()
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DB_PATH = "faiss_index_store"
 FORCE_REBUILD = True
 
 
 def get_qa_chain():
+    # 检查 Key
+    api_key = get_api_key()
+    if not api_key:
+        st.error("未找到 API Key。")
+        return None
     # 加载 Embedding 模型
     print("⬇ [bnuzHelper] 正在加载 Embedding 模型...")
     embedding_model = HuggingFaceEmbeddings(
