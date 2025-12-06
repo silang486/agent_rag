@@ -15,21 +15,16 @@ DB_PATH = "faiss_index_store"
 # 是否强制重新构建数据库？
 # 如果你修改了 ai_tutorial.txt，请把这里改为 True 运行一次，然后改回 False
 FORCE_REBUILD = False
-
-
 print("⬇ 正在加载 Embedding 模型...")
 embedding_model = HuggingFaceEmbeddings(
     model_name="BAAI/bge-small-zh-v1.5",
     model_kwargs={'device': 'cpu'},
     encode_kwargs={'normalize_embeddings': True}
 )
-
-
 # 判断本地是否已经有数据库文件
 if os.path.exists(DB_PATH) and not FORCE_REBUILD:
     print(f" 发现本地向量数据库: {DB_PATH}")
     print("⚡ 正在直接加载，跳过数据处理...")
-
     # 【关键】allow_dangerous_deserialization=True 是必须的
     # 因为 pickle 文件理论上不安全，但这是我们自己生成的，所以可以信任
     db = FAISS.load_local(
@@ -38,10 +33,8 @@ if os.path.exists(DB_PATH) and not FORCE_REBUILD:
         allow_dangerous_deserialization=True
     )
     print("✅ 本地数据库加载成功！")
-
 else:
     print(" 未发现本地数据库 或 要求强制重构，开始处理数据...")
-
     # --- 原有的数据处理流程 ---
     try:
         loader = TextLoader("bnuz_helper.txt", encoding="utf-8")
@@ -94,5 +87,6 @@ def ask_question(question):
         print(f"[内容]: {doc.page_content}...")
 question1="北师珠的人工智能专业如何？"
 question2="刘凯老师讲课如何？考试严格吗？"
+print('请输入提问：')
 question=input()
 ask_question(question)

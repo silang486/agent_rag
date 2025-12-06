@@ -18,3 +18,4 @@ faiss_index/
 venv/
 env/
 bnuz_helper.txt
+faiss_index_store/
