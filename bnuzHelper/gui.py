@@ -1,3 +1,4 @@
+#作者：小明 于2025，12，6
 import streamlit as st
 from bnuzHelper import get_qa_chain  # 从你的 rag2 导入那个函数
 #streamlit run gui.py
