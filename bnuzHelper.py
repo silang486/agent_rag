@@ -1,4 +1,7 @@
 import os
+
+from langchain_core.prompts import PromptTemplate
+
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 from langchain_community.document_loaders import TextLoader
 from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
@@ -14,6 +17,7 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DB_PATH = "faiss_index_store"
 # 是否强制重新构建数据库？
 # 如果你修改了 ai_tutorial.txt，请把这里改为 True 运行一次，然后改回 False
+
 FORCE_REBUILD = False
 print("⬇ 正在加载 Embedding 模型...")
 embedding_model = HuggingFaceEmbeddings(
@@ -52,15 +56,24 @@ else:
     db = FAISS.from_documents(texts, embedding_model)
 
     # --- 保存到本地 ---
-    print(f"💾 正在保存数据库到: {DB_PATH} ...")
+    print(f" 正在保存数据库到: {DB_PATH} ...")
     db.save_local(DB_PATH)
-    print("✅ 数据库构建并保存完毕！")
+    print("数据库构建并保存完毕！")
 
 # 创建检索器
 retriever = db.as_retriever(search_kwargs={"k": 2})
+template = """你是一个北师珠（BNUZ）的热心学长/学姐助手，专门为新生解答关于校园生活、学习、老师评价等问题。
+请根据下方的【参考资料】回答用户的问题。
+如果不清楚，请直接说“抱歉，资料里没有提到这点，无法提供帮助”，不要瞎编。
+回答语气如果没有指定，就亲切、活泼一点。
 
+【参考资料】：
+{context}
+
+用户问题：{question}
+"""
 # 初始化 DeepSeek 模型
-
+QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 llm = ChatOpenAI(
     model="deepseek-chat",
     openai_api_key=DEEPSEEK_API_KEY,
@@ -74,7 +87,8 @@ def ask_question(question):
         llm=llm,
         chain_type="stuff",
         retriever=retriever,
-        return_source_documents=True # 返回引用的素材来源
+        return_source_documents=True,
+        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}  # 注入自定义提示词
     )
     question = question
 
@@ -85,8 +99,58 @@ def ask_question(question):
     print(" 参考的素材片段:")
     for doc in response['source_documents']:
         print(f"[内容]: {doc.page_content}...")
+
+
+def get_qa_chain():
+    # 1. 这里如果你的 retriever 还没定义，确保它是全局的或者在这里定义
+    # retriever = db.as_retriever(search_kwargs={"k": 2})
+
+    # 2. 初始化 LLM (保留之前的配置)
+    llm = ChatOpenAI(
+        model="deepseek-chat",
+        openai_api_key=DEEPSEEK_API_KEY,
+        openai_api_base=DEEPSEEK_BASE_URL,
+        temperature=0.1,
+        max_tokens=1024
+    )
+
+    # 3. 定义提示词模板 (建议加上)
+    template = """你是一个北师珠（BNUZ）的助手。请根据下方的【参考资料】回答用户问题。
+    如果不清楚，请说不知道。
+
+    【参考资料】：
+    {context}
+
+    用户问题：{question}
+    """
+    QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
+
+    # 4. 构建链并返回
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,  # 确保这里的 retriever 能被访问到
+        return_source_documents=True,
+        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    )
+
+    return qa_chain
 question1="北师珠的人工智能专业如何？"
 question2="刘凯老师讲课如何？考试严格吗？"
-print('请输入提问：')
-question=input()
-ask_question(question)
+if __name__ == "__main__":
+    chain = get_qa_chain()
+    res = chain.invoke({"query": "测试一下"})
+    print(res['result'])
+    while True:
+        try:
+            query = input("\n👉 请输入你的问题：")
+            if query.lower() in ["exit", "q", "quit"]:
+                print("👋 学弟学妹再见！")
+                break
+            if not query.strip():
+                continue
+
+            ask_question(query)  # 调用你原本的函数
+        except KeyboardInterrupt:
+            print("\n程序中断")
+            break
