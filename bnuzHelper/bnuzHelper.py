@@ -1,5 +1,8 @@
 
 import os
+
+from openai import api_key
+
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
 from langchain_community.document_loaders import TextLoader
@@ -17,7 +20,10 @@ def get_api_key():
     # 优先读 Secrets (云端)
     if "DEEPSEEK_API_KEY" in st.secrets:
         return st.secrets["DEEPSEEK_API_KEY"]
-    # 其次读本地文件
+    # 其次读系统文件
+    if(os.environ.get("DEEPSEEK_API_KEY")!=None):
+        return os.environ.get("DEEPSEEK_API_KEY")
+    #读本地文件
     try:
         with open("api.txt", "r", encoding="utf-8") as f:
             return f.read().strip()
