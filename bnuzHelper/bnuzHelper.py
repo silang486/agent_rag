@@ -17,8 +17,10 @@ from langchain_core.prompts import PromptTemplate
 import streamlit as st
 
 def get_api_key():
-
-    # 读系统文件
+    # 优先读 Secrets (云端)
+    # if "DEEPSEEK_API_KEY" in st.secrets:
+    #     return st.secrets["DEEPSEEK_API_KEY"]
+    # 其次读系统文件
     if(os.environ.get("DEEPSEEK_API_KEY")!=None):
         return os.environ.get("DEEPSEEK_API_KEY")
     #读本地文件
