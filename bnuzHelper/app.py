@@ -1,11 +1,9 @@
 #作者：小明 于2025，12，6
 import streamlit as st
-from bnuzHelper import get_qa_chain  # 从你的 rag2 导入那个函数
+from bnuzHelper import get_qa_chain
 #streamlit run app.py
 #终端输入上面代码运行
 st.title("🎓 BNUZ 新生百事通")
-
-
 
 # 这样只有第一次打开网页会加载模型，后面聊天都非常快
 @st.cache_resource
