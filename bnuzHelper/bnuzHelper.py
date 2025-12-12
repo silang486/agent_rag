@@ -1,8 +1,6 @@
 
 import os
 import torch
-
-
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
 from langchain_community.document_loaders import TextLoader
@@ -32,7 +30,7 @@ def get_api_key():
 DEEPSEEK_API_KEY = get_api_key()
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DB_PATH = "faiss_index_store"
-FORCE_REBUILD = True#控制是否重新构建数faiss数据库的变量，true代表无论文件是否存在，重新embeding，重新构建rag数据库
+FORCE_REBUILD = False#控制是否重新构建数faiss数据库的变量，true代表无论文件是否存在，重新embeding，重新构建rag数据库
 
 
 def inject_metadata_to_content(docs):
@@ -165,7 +163,7 @@ def get_qa_chain():
     )
 
     # 【关键修改 3】使用“舆情分析师”提示词
-    template = """你是一个北师珠（BNUZ）的资深学长/学姐助手。
+    template = """你是一个北师大（BNU）的资深学长/学姐助手。
        你现在的任务是整理并回答关于学校的问题。
 
        【参考资料】中可能包含了来自不同学生的【多条评价】（用列表形式呈现）。
@@ -174,7 +172,10 @@ def get_qa_chain():
        2. 如果大家观点一致，就总结这个共识。
        3. 如果观点冲突（例如有人说好，有人说坏），请客观地把两边的观点都列出来（例如：“关于给分，有同学觉得...但也有同学认为...”）。
        4. 保持回答的条理性，分点作答。
-
+       5. 遇到不知道的问题时请直接回答不知道。并询问是否愿意在侧边栏留下反馈；当遇到与学校生活无关的问题时，请重复一遍自己的职能后委婉表达拒绝回答
+       6. 回答不要超出原本问题的内容。不要回答一些无关的信息。例如提问“你好”，简单回复即可，或者推荐几个问题。不要回答一些无关的信息
+       7. 如果有北京校区的同学来提问，或者有关于北京校区的提问，请委婉的表示由于开发者来自珠海校区，知识和UI设计都以BNUZ先入为主，关于北京校区的知识比较匮乏。并且邀请回答北京校区相关的问题，帮助更新知识库。
+    
        【参考资料】：
        {context}
 
