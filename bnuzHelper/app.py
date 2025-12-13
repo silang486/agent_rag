@@ -9,10 +9,7 @@ from langchain_community.callbacks import StreamlitCallbackHandler
 from bnuzHelper import get_qa_chain
 
 
-# ==========================================
-# 1. 核心逻辑层 (Core Logic Layer)
-# 负责数据处理、模型加载，不包含任何 UI 代码
-# ==========================================
+
 
 class BotEngine:
     """负责 RAG 模型的加载和推理"""
@@ -71,10 +68,7 @@ class FeedbackService:
             os.remove(cls.FILE_PATH)
 
 
-# ==========================================
-# 2. UI 组件层 (UI Component Layer)
-# 负责界面渲染，不处理底层逻辑
-# ==========================================
+
 
 class UIComponents:
     """界面组件集合"""
@@ -113,7 +107,7 @@ class UIComponents:
 
             # 管理员入口
             st.markdown("---")
-            with st.expander("🔐 反馈信箱入口"):
+            with st.expander("🔐 反馈信箱"):
                 admin_pwd = st.text_input("输入管理员密码", type="password")
                 if admin_pwd == "bnuz666":
                     df = FeedbackService.load_dataframe()
@@ -143,15 +137,12 @@ class UIComponents:
         # 使用 container 稍微隔离一下视觉
         with st.container():
             st.markdown("---")  # 分割线
-            st.caption("愿意填写问卷，给我们反馈，让它更好吗？")
+            st.caption("愿意填写问卷，给我们反馈，为我们提供知识，让它更好吗？")
             # st.code 用于显示文本，自带右上角的“复制”按钮，非常适合分享链接
-            st.code("https://wj.qq.com/s2/your-survey-id", language="text")
+            st.code("https://v.wjx.cn/vm/elbP0yB.aspx", language="text")
 
 
-# ==========================================
-# 3. 主程序入口 (Main Controller)
-# 负责组装各个模块
-# ==========================================
+
 
 def main():
     st.set_page_config(page_title="BNU 百事通", page_icon="🎓")
@@ -176,7 +167,7 @@ def main():
         UIComponents.render_invite_footer()
 
     # 6. 处理用户输入循环
-    if prompt := st.chat_input("想问什么？"):
+    if prompt := st.chat_input("想问什么？（请点击右侧箭头发送提问，暂时不支持回车发送提问）"):
         # 显示用户提问
         with st.chat_message("user"):
             st.markdown(prompt)
