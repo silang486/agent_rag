@@ -13,6 +13,10 @@ from langchain_core.prompts import PromptTemplate
 
 import streamlit as st
 
+FORCE_REBUILD = True
+#控制是否重新构建数faiss数据库的变量，true代表无论文件是否存在，重新embeding，重新构建rag数据库
+
+
 def get_api_key():
     # 优先读 Secrets (云端)
     # if "DEEPSEEK_API_KEY" in st.secrets:
@@ -30,7 +34,7 @@ def get_api_key():
 DEEPSEEK_API_KEY = get_api_key()
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DB_PATH = "faiss_index_store"
-FORCE_REBUILD = False#控制是否重新构建数faiss数据库的变量，true代表无论文件是否存在，重新embeding，重新构建rag数据库
+
 
 
 def inject_metadata_to_content(docs):

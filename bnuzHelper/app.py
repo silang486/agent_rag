@@ -1,5 +1,10 @@
 #作者：小明 于2025，12，6
-#streamlit run app.py 终端输入这段代码运行
+
+'''
+streamlit run app.py
+终端输入这段代码运行
+'''
+
 import streamlit as st
 import csv
 import os
@@ -68,14 +73,11 @@ class FeedbackService:
             os.remove(cls.FILE_PATH)
 
 
-
-
 class UIComponents:
     """界面组件集合"""
 
     @staticmethod
     def init_session_state():
-        """初始化会话状态"""
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
@@ -86,9 +88,17 @@ class UIComponents:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
 
+                # === [修改点 1] 渲染历史记录里的参考资料 ===
+                # 检查这条消息里有没有 'sources' 字段，且不为空
+                if "sources" in msg and msg["sources"]:
+                    with st.expander("查看参考资料 (历史)"):
+                        for doc_content in msg["sources"]:
+                            st.info(doc_content)
+
     @staticmethod
     def render_feedback_sidebar():
-        """渲染侧边栏反馈功能"""
+        # ... (这部分代码保持不变，太长省略) ...
+        # 请保留你原有的 render_feedback_sidebar 代码
         with st.sidebar:
             st.markdown("---")
             st.header("📝 没找到答案？")
@@ -105,7 +115,6 @@ class UIComponents:
                     elif FeedbackService.save(feedback_q, feedback_c):
                         st.success("收到！感谢你的投喂，我们会尽快更新知识库！❤️")
 
-            # 管理员入口
             st.markdown("---")
             with st.expander("🔐 反馈信箱"):
                 admin_pwd = st.text_input("输入管理员密码", type="password")
@@ -129,19 +138,11 @@ class UIComponents:
 
     @staticmethod
     def render_invite_footer():
-        """
-        [新增功能] 底部邀请标签
-        功能：显示一条邀请信息，并提供一键复制的问卷链接
-        设计理念：独立组件，不干扰聊天流
-        """
-        # 使用 container 稍微隔离一下视觉
+        """底部邀请标签"""
         with st.container():
-            st.markdown("---")  # 分割线
+            st.markdown("---")
             st.caption("愿意填写问卷，给我们反馈，为我们提供知识，让它更好吗？")
-            # st.code 用于显示文本，自带右上角的“复制”按钮，非常适合分享链接
             st.code("https://v.wjx.cn/vm/elbP0yB.aspx", language="text")
-
-
 
 
 def main():
@@ -151,29 +152,28 @@ def main():
     # 1. 初始化
     UIComponents.init_session_state()
 
-    # 2. 加载模型 (带 Spinner)
+    # 2. 加载模型
     with st.spinner("正在启动..."):
         qa_chain = BotEngine.load_brain()
 
     # 3. 渲染侧边栏
     UIComponents.render_feedback_sidebar()
 
-    # 4. 渲染聊天历史
+    # 4. 渲染聊天历史 (现在它能显示历史资料了)
     UIComponents.render_chat_history()
 
-    # 5. [新增] 渲染底部邀请 (放在输入框上方，历史记录下方)
-    # 如果希望它始终在最底部，Streamlit 的机制决定了它只能在聊天流的末尾
+    # 5. 渲染底部邀请
     if len(st.session_state.messages) > 0:
         UIComponents.render_invite_footer()
 
-    # 6. 处理用户输入循环
+    # 6. 处理用户输入
     if prompt := st.chat_input("想问什么？（请点击右侧箭头发送提问，暂时不支持回车发送提问）"):
-        # 显示用户提问
+
         with st.chat_message("user"):
             st.markdown(prompt)
+        # 注意：这里先不要 append user message，等最后一起 append 也可以，或者像现在这样
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # 生成回答
         with st.chat_message("assistant"):
             try:
                 with st.spinner("学长正在翻书..."):
@@ -182,15 +182,26 @@ def main():
 
                 answer = response['result']
 
-                # 显示引用源
-                with st.expander("查看参考资料"):
+                # === [修改点 2] 提取参考资料内容 ===
+                source_contents = []
+                if 'source_documents' in response:
                     for doc in response['source_documents']:
-                        st.info(doc.page_content)
+                        source_contents.append(doc.page_content)
 
-                # 记录历史
-                st.session_state.messages.append({"role": "assistant", "content": answer})
+                # 显示本次回答的引用源 (让用户在刷新前能看到一眼)
+                if source_contents:
+                    with st.expander("查看参考资料"):
+                        for content in source_contents:
+                            st.info(content)
 
-                # 强制刷新以更新底部的邀请栏位置
+                # === [修改点 3] 将资料存入 session_state ===
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer,
+                    "sources": source_contents  # 关键：把资料存进去！
+                })
+
+                # 强制刷新 (刷新后，render_chat_history 会负责把上面的 sources 画出来)
                 st.rerun()
 
             except Exception as e:
